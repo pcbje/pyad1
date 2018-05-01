@@ -1,0 +1,207 @@
+= AD1 specification
+AccessData AD1 Format specification
+
+:numbered!:
+[abstract]
+== Summary
+This is a highly simplified, preliminary, and most likely flawed documentation of version 3 and 4 of the AccessData AD1 image file format.
+
+[preface]
+== Document information
+[cols="1,5"]
+|===
+| Author(s): | Petter Chr. Bjelland <post@pcbje.com>
+| Classification: | Public
+| Keywords: | AccessData Format, AD1
+|===
+
+
+[preface]
+== Revision history
+[cols="1,1,1,5",options="header"]
+|===
+| Version | Author        | Date     | Comments
+| 0.0.1   | P.C. Bjelland | May 2018 | Initial version
+|===
+
+:numbered:
+== Introduction
+The AccessData Format (AD1) is used to store media images.
+
+The layout of this documentation is inspired by the EWF documentation.
+
+=== Test version
+The following version of programs were used to test the information within this document:
+
+* FTK Imager 3.0 (Windows 10)
+
+== Segment file
+
+AD1 stores data in one or more segment files. Each segment file consists of:
+
+* A file margin.
+* One or more items.
+
+The first segments contains an image header with some metadata.
+
+=== File margin
+
+All segments begins with a 512 byte header.
+
+[cols="1,1,1,1,5",options="header"]
+|===
+| Offset | Size | Value | Hashed | Description
+| 0      | 15   |       | No     | Signature "ADSEGMENTEDFILE"
+| 15     | 30   |       | No     | Unknown
+| 45     | 467  | 0x00  | No     | Unknown
+|===
+
+=== Image header
+
+[cols="1,1,1,1,5",options="header"]
+|===
+| Offset | Size | Value  | Hashed | Description
+| 0      | 16   |        | Yes    | Unknown
+| 16     | 4    | 3 or 4 | Yes    | Format version
+| 20     | 4    |        | Yes    | Unknown
+| 24     | 4    |        | Yes    | zlib chunk size
+| 28     | 8    |        | Yes    | Unknown
+| 36     | 8    |        | Yes    | Offset first item
+| 44     | 4    |        | Yes    | Length of image path (= N)
+| 48     | 44   |        | Yes    | Unknown. Version 4 only
+| 48/92  | N    |        | Yes    | Image path
+|===
+
+=== Item
+
+==== Item header
+
+Offsets ignore size of file margin.
+
+[cols="1,1,1,1,5",options="header"]
+|===
+| Offset | Size | Value | Hashed | Description
+| 0      | 8   |        | Yes      | Offset next group (e.g. folder)
+| 8      | 8   |        | Yes      | Offset next item in group
+| 16     | 8   |        | Yes      | Offset end of compressed data
+| 24     | 8   |        | Yes      | Offset start of compressed data
+| 32     | 8   |        | Yes      | Decompressed size
+| 40     | 4   |        | Yes      | Item type (see item types)
+| 44     | 4   |        | Yes      | Length of item name (=N)
+| 48     | N   |        | Yes      | Item name
+| 48+N   | 8   |        | Yes      | Group index (e.g., folder)
+|===
+
+==== Compressed data
+
+[cols="1,1,1,1,5",options="header"]
+|===
+| Offset | Size | Value | Hashed | Description
+| 0      | 8   |        | No      | Compressed chunk count (=N)
+| 8      | 8*N |        | No      | Chunk offsets
+| 8+8*N  |     |        | No      | Compressed chunks
+|===
+
+Note that decompressed chunks are hashed during verification.
+
+==== Item metadata
+
+Loops while next metadata offset is > 0.
+
+[cols="1,1,1,1,5",options="header"]
+|===
+| Offset | Size | Value | Hashed | Description
+| 0      | 8   |        | Yes      | Next metadata offset
+| 8      | 4   |        | Yes      | Metadata category (see metadata categories)
+| 12     | 4   |        | Yes      | Metadata key (see metadata keys)
+| 16     | 4   |        | Yes      | Length of metadata value
+|===
+
+=== Image footer
+
+Version 4 of AD1 image contains a footer in the last segment.
+
+[cols="1,1,1,1,5",options="header"]
+|===
+| Offset | Size | Value | Hashed | Description
+| -352   | 352  |       | Yes    | Unknown
+|===
+
+
+== Constants
+
+=== Item types
+
+[cols="1,5",options="header"]
+|===
+| Value | Description
+| 0     | Normal file
+|       | Folder
+|===
+
+=== Metadata categories
+
+[cols="1,5",options="header"]
+|===
+| Value | Description
+| 1     | Item content hashes
+| 2     | Unknown
+| 3     | Item size
+| 4     | Unknown
+| 5     | Timestamps
+|===
+
+=== Metadata keys
+
+==== 1/Hashes
+
+[cols="1,1,5",options="header"]
+|===
+| Key | Value | Description
+| 20481  | <md5 hash>  | MD5
+| 20482  | <sha1 hash> | SHA1
+|===
+
+==== 2/Unknown
+
+[cols="1,1,5",options="header"]
+|===
+| Key | Value | Description
+| 2   | 1     | Unknown
+|===
+
+==== 3/Hashes
+
+[cols="1,1,5",options="header"]
+|===
+| Key | Value | Description
+| 3   | <number> | File size
+|===
+
+==== 4/Unknown
+
+[cols="1,1,5",options="header"]
+|===
+| Key | Value | Description
+| 13  | true/false  | Unknown string
+| 14   | true/false | Unknown string
+| 30   | true/false | Unknown string
+| 4098  | true/false  | Unknown string
+| 4099  | true/false  | Unknown string
+| 4100  | true/false  | Unknown string
+| 4101  | true/false  | Unknown string
+|===
+
+==== 5/Timestamps
+
+[cols="1,1,5",options="header"]
+|===
+| Key | Value | Description
+| 7   | <date and time> | Item creation time
+| 8   | <date and time> | Item modification time
+| 9   | <date and time> | Item access time
+|===
+
+== Image verification
+
+Keeps two hashes "metadata" and "content". The content hash holds digest of all decompressed content. At the end of verification, the hex digest of content hash is added to metadata hash. The hex digest of metadata hash should match log file. In version 4, the image footer is added to metadata hash before the items.
