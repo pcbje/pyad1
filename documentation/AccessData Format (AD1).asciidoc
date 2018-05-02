@@ -30,6 +30,8 @@ The AccessData Format (AD1) is used to store media images.
 
 The layout of this documentation is inspired by the EWF documentation.
 
+Little endian.
+
 === Test version
 The following version of programs were used to test the information within this document:
 
@@ -52,8 +54,16 @@ All segments begins with a 512 byte header.
 |===
 | Offset | Size | Value | Hashed | Description
 | 0      | 15   |       | No     | Signature "ADSEGMENTEDFILE"
-| 15     | 30   |       | No     | Unknown
-| 45     | 467  | 0x00  | No     | Unknown
+| 15     | 1    |       | No     | Padding
+| 16     | 4    | 1     | No     | Unknown
+| 20     | 4    | 2     | No     | Unknown
+| 24     | 4    |       | No     | Segment number, starting at 1
+| 28     | 4    |       | No     | Number of segments
+| 32     | 2    | 0     | No     | Unknown
+| 34     | 4    |       | No     | Segment size
+| 38     | 2    | 0     | No     | Unknown
+| 40     | 4    | 512   | No     | Unknown
+| 44     | 468  | 0     | No     | Padding
 |===
 
 === Image header
@@ -61,12 +71,13 @@ All segments begins with a 512 byte header.
 [cols="1,1,1,1,5",options="header"]
 |===
 | Offset | Size | Value  | Hashed | Description
-| 0      | 16   |        | Yes    | Unknown
+| 0      | 14   |        | Yes    | Signature "ADLOGICALIMAGE"
+| 14     | 2    |        | Yes    | Unknown
 | 16     | 4    | 3 or 4 | Yes    | Format version
 | 20     | 4    |        | Yes    | Unknown
-| 24     | 4    |        | Yes    | zlib chunk size
-| 28     | 8    |        | Yes    | Unknown
-| 36     | 8    |        | Yes    | Offset first item
+| 24     | 4    | 65536  | Yes    | zlib chunk size
+| 28     | 8    |        | Yes    | Image header length
+| 36     | 8    |        | Yes    | Image header+info length
 | 44     | 4    |        | Yes    | Length of image path (= N)
 | 48     | 44   |        | Yes    | Unknown. Version 4 only
 | 48/92  | N    |        | Yes    | Image path
@@ -135,8 +146,8 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,5",options="header"]
 |===
 | Value | Description
-| 0     | Normal file
-|       | Folder
+| 0x0     | Normal file
+| 0x5     | Folder
 |===
 
 === Metadata categories
@@ -144,11 +155,11 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,5",options="header"]
 |===
 | Value | Description
-| 1     | Item content hashes
-| 2     | Unknown
-| 3     | Item size
-| 4     | Unknown
-| 5     | Timestamps
+| 0x1     | Item content hashes
+| 0x2     | Unknown
+| 0x3     | Item size
+| 0x4     | Unknown
+| 0x5     | Timestamps
 |===
 
 === Metadata keys
@@ -158,8 +169,8 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,1,5",options="header"]
 |===
 | Key | Value | Description
-| 20481  | <md5 hash>  | MD5
-| 20482  | <sha1 hash> | SHA1
+| 0x5001  | <md5 hash>  | MD5
+| 0x5002  | <sha1 hash> | SHA1
 |===
 
 ==== 2/Unknown
@@ -167,7 +178,7 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,1,5",options="header"]
 |===
 | Key | Value | Description
-| 2   | 1     | Unknown
+| 0x2   | 1     | Unknown
 |===
 
 ==== 3/Hashes
@@ -175,7 +186,7 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,1,5",options="header"]
 |===
 | Key | Value | Description
-| 3   | <number> | File size
+| 0x3   | <number> | File size
 |===
 
 ==== 4/Unknown
@@ -183,13 +194,13 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,1,5",options="header"]
 |===
 | Key | Value | Description
-| 13  | true/false  | Unknown string
-| 14   | true/false | Unknown string
-| 30   | true/false | Unknown string
-| 4098  | true/false  | Unknown string
-| 4099  | true/false  | Unknown string
-| 4100  | true/false  | Unknown string
-| 4101  | true/false  | Unknown string
+| 0x13  | true/false  | Unknown string
+| 0x14   | true/false | Unknown string
+| 0x1E   | true/false | Unknown string
+| 0x1002  | true/false  | Unknown string
+| 0x1003  | true/false  | Unknown string
+| 0x1004  | true/false  | Unknown string
+| 0x1005  | true/false  | Unknown string
 |===
 
 ==== 5/Timestamps
@@ -197,9 +208,9 @@ Version 4 of AD1 image contains a footer in the last segment.
 [cols="1,1,5",options="header"]
 |===
 | Key | Value | Description
-| 7   | <date and time> | Item creation time
-| 8   | <date and time> | Item modification time
-| 9   | <date and time> | Item access time
+| 0x7   | <date and time> | Item access time (?)
+| 0x8   | <date and time> | Item modification time (?)
+| 0x9   | <date and time> | Item creation time (?)
 |===
 
 == Image verification
