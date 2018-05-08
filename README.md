@@ -16,16 +16,22 @@ python run_tests.py
 ### Usage
 
 ```python
-# python demo.py some-image.ad1
+# python demo.py some-image.ad1 ./output
 import sys
+import os
 
 import pyad1.reader
 
 with pyad1.reader.AD1Reader(sys.argv[1]) as ad1:
-        for item_type, parent_path, filename, metadata, content in ad1:
-            print (parent_path, filename)
-            with open(filename, 'wb') as out:
-                    out.write(content)
+    for item_type, folder, filename, metadata, content in ad1:
+        output_folder = os.path.join(sys.argv[2], folder)
+
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        if item_type == 0:
+            with open(os.path.join(output_folder, filename), 'wb') as out:
+                out.write(content)
             # ...
 ```
 

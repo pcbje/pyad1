@@ -128,7 +128,12 @@ class AD1Reader(object):
             folder_index, = struct.unpack('<q', self._Read(8))
 
             parent_path = folder_cache.get(folder_index + self.margin, '')
-            path = self.separator.join([parent_path, filename.decode(self.string_encoding)])
+
+            if parent_path:
+                path = self.separator.join([parent_path, filename.decode(self.string_encoding)])
+            else:
+                path = filename.decode(self.string_encoding)
+
             folder_cache[block_start + self.absolute_offset] = path
 
             content = b''
