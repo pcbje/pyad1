@@ -1,0 +1,31 @@
+﻿Created By AccessData® FTK® Imager 3.4.3.3 
+
+Case Information: 
+Acquired using: ADI3.4.3.3
+Case Number: Case001
+Evidence Number: Evidence001
+Unique Description: Description001
+Examiner: pcbje001
+Notes: Notes001
+
+--------------------------------------------------------------
+
+Information for C:\Users\pcbje\Desktop\text-and-pictures.ad1:
+[Computed Hashes]
+ MD5 checksum:    24b6c553392e92dec7b6fa9c92c0216d
+ SHA1 checksum:   0608982ed40664ec922f1991ac7ccf07d239ada1
+
+Image information:
+ Acquisition started:   Wed May 02 09:47:47 2018
+ Acquisition finished:  Wed May 02 09:47:49 2018
+ Segment list:
+  C:\Users\pcbje\Desktop\text-and-pictures.ad1
+  C:\Users\pcbje\Desktop\text-and-pictures.ad2
+  C:\Users\pcbje\Desktop\text-and-pictures.ad3
+  C:\Users\pcbje\Desktop\text-and-pictures.ad4
+
+Image Verification Results:
+ Verification started:  Wed May 02 09:47:49 2018
+ Verification finished: Wed May 02 09:47:49 2018
+ MD5 checksum:    24b6c553392e92dec7b6fa9c92c0216d : verified
+ SHA1 checksum:   0608982ed40664ec922f1991ac7ccf07d239ada1 : verified

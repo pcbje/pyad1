@@ -68,6 +68,8 @@ All segments begins with a 512 byte header.
 
 === Image header
 
+Only in first segment file.
+
 [cols="1,1,1,1,5",options="header"]
 |===
 | Offset | Size | Value  | Hashed | Description

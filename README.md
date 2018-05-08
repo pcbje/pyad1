@@ -10,6 +10,7 @@ This is a work in progress, please use with caution.
 git clone https://github.com/pcbje/pyad1
 cd pyad1
 python setup.py install
+python run_tests.py
 ```
 
 ### Usage
