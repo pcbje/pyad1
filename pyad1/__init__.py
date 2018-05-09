@@ -1,1 +1,1 @@
-__all__ = ['reader', 'writer']
+__all__ = ['reader']

@@ -7,7 +7,6 @@ import hashlib
 import os
 
 import pyad1.reader
-import pyad1.writer
 
 
 class AD1ReaderTest(unittest.TestCase):
