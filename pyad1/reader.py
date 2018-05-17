@@ -118,11 +118,10 @@ class AD1Reader(object):
         while len(self.paths) > 0 or self.current_file.tell() < self.current_size - self.margin:
             block_start = self.current_file.tell()
 
-            next_group, next_in_group, end_of_data, start_of_data, decompressed_size, = struct.unpack('<5q', self._Read(8 * 5))
+            next_group, next_in_group, next_block, start_of_data, decompressed_size, = struct.unpack('<5q', self._Read(8 * 5))
             item_type, filename_length, = struct.unpack('<2I', self._Read(4 * 2))
 
-            if end_of_data > 0:
-                end_of_data += self.margin
+            next_block += self.margin
             start_of_data += self.margin
 
             filename = self._Read(filename_length)
@@ -148,7 +147,6 @@ class AD1Reader(object):
                     content += zlib.decompress(compressed)
 
             metadata = {}
-            next_block = end_of_data
 
             while next_block > 0:
                 next_block, = struct.unpack('<q', self._Read(8))
