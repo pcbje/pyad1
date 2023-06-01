@@ -7,6 +7,8 @@ import glob
 import os
 import struct
 import zlib
+import io
+import hashlib
 
 
 class AD1Reader(object):
@@ -19,6 +21,8 @@ class AD1Reader(object):
         self.paths = self._Glob(ad1_path)
         self.absolute_offset = 0
         self.header_read = False
+        self.sha1_meta_digest = hashlib.sha1()
+        self.sha1_content_digest = hashlib.sha1()
 
     def __enter__(self):
         current_path = self.paths.pop(0)
@@ -32,13 +36,13 @@ class AD1Reader(object):
 
     def _ReadHeader(self):
         # Margin.
-        self._Read(self.margin)
+        self._Read(self.margin, False)
 
         # Signature.
         self._Read(16)
 
         # AD1 version (= 3 or 4)
-        self.version, = struct.unpack('<I', self.current_file.read(4))
+        self.version, = struct.unpack('<I', self._Read(4))
 
         if self.version != 3 and self.version != 4:
             raise Exception("Invalid version: %s" % self.version)
@@ -58,10 +62,13 @@ class AD1Reader(object):
             # Unknown.
             self._Read(44)
 
-        self.logical_image_path = self.current_file.read(logical_image_path_length)
+        self.logical_image_path = self._Read(logical_image_path_length)
 
         if self.logical_image_path != 'Custom Content Image([Multi])':
-            self.current_file.seek(self.margin + self.image_header_length_2 - self.current_file.tell(), 1)
+            self._Read(self.margin + self.image_header_length_2 - self.current_file.tell())
+
+        if self.version == 4:
+            self._ReadLastFrom(-372)
 
         self.header_read = True
 
@@ -90,7 +97,7 @@ class AD1Reader(object):
 
         return sorted_ad_paths
 
-    def _Read(self, length):
+    def _Read(self, length, doDigest=True):
         last_read = self.current_file.read(length)
         data = last_read
 
@@ -110,7 +117,19 @@ class AD1Reader(object):
         if len(data) < length:
             raise Exception('Incomplete read')
 
+        if doDigest:
+            self.sha1_meta_digest.update(data)
+
         return data
+
+    def _ReadLastFrom(self, pos):
+        with open(self.paths[-1], 'rb') as inp:
+            inp.seek(pos, io.SEEK_END)
+            data = inp.read()
+            self.sha1_meta_digest.update(data)
+
+    def Sha1Checksum(self):
+        return self.sha1_meta_digest.hexdigest()
 
     def __iter__(self):
         folder_cache = {}
@@ -139,12 +158,14 @@ class AD1Reader(object):
             content = b''
 
             if decompressed_size > 0:
-                chunk_count = struct.unpack('<q', self._Read(8))[0] + 1
-                chunk_arr = struct.unpack('<%sq' % chunk_count, self._Read(8 * chunk_count))
+                chunk_count = struct.unpack('<q', self._Read(8, False))[0] + 1
+                chunk_arr = struct.unpack('<%sq' % chunk_count, self._Read(8 * chunk_count, False))
 
                 for c in range(1, len(chunk_arr)):
-                    compressed = self._Read(chunk_arr[c] - chunk_arr[c - 1])
-                    content += zlib.decompress(compressed)
+                    compressed = self._Read(chunk_arr[c] - chunk_arr[c - 1], False)
+                    decompressed = zlib.decompress(compressed)
+                    self.sha1_content_digest.update(decompressed)
+                    content += decompressed
 
             metadata = {}
 
@@ -158,3 +179,5 @@ class AD1Reader(object):
                 metadata[category][key] = self._Read(value_length)
 
             yield item_type, parent_path, filename, metadata, content
+
+        self.sha1_meta_digest.update(self.sha1_content_digest.digest())
