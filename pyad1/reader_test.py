@@ -26,5 +26,9 @@ class AD1ReaderTest(unittest.TestCase):
                     actual_sha1 = content_digest.hexdigest()
                     self.assertEqual(expected_sha1, actual_sha1)
 
+            checksum = ad1.Sha1Checksum()
+            # Retrived from text-and-pictures.ad1.txt
+            self.assertEqual('0608982ed40664ec922f1991ac7ccf07d239ada1', checksum)
+
 if __name__ == '__main__':
     unittest.main()
